@@ -80,11 +80,15 @@ var getLogs = function(endpoint) {
 
 var parseLogs = function(data) {
   var logs = [];
-  data.forEach(function (v, i) {
-    var values = v.split(':');
-    logs.push({ip: values[0], timestamp: values[1]});
+  data.forEach(function (v) {
+    logs.push(prepareObject(v));
   });
   return logs;
+};
+
+var prepareObject = function(str) {
+  var values = str.split(':');
+  return {ip: values[0], timestamp: values[1]};
 };
 
 var getRoundedTimestamp = function(timestamp, granularity) {
