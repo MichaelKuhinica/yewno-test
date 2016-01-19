@@ -11,8 +11,8 @@ promise.promisifyAll(redis.Multi.prototype);
 
 var granularities = {
   seconds: {
-    size: 1440,
-    factor: 60
+    size: 60,
+    factor: 1
   }
 };
 
@@ -24,7 +24,7 @@ app.get('/v1/hello-world', function(req, response, next) {
   var ip = req.ip;
   var multi = client.multi();
   multi.rpush(['logs:hello-world', ip+":"+stamp])
-    .hincrby('logs:hello-world:'+ip+':'+getRoundedTimestamp(stamp, granularities.seconds), 'hits', 1)
+    .hincrby('hits:hello-world', ip+':'+getRoundedTimestamp(stamp, granularities.seconds), 1)
     .exec(function(err, res) {
       if(err) {
         reportError(err, res);
@@ -48,6 +48,16 @@ app.get('/v1/logs', function(req, res, next) {
     res.json(logset);
   }).catch(function(err) {
     reportError(err, res);
+  });
+});
+
+app.get('/v1/hello-world/logs/minute', function(req, res, next) {
+  client.hgetall('hits:hello-world', function(err, data) {
+    if(err) {
+      reportError(err, res);
+    } else {
+      res.json(data);
+    }
   });
 });
 
