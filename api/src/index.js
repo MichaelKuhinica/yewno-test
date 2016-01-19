@@ -6,25 +6,29 @@ var express = require('express'),
 
 var app = express();
 
-console.log(process.env.REDIS_PORT_6379_TCP_ADDR + ':' + process.env.REDIS_PORT_6379_TCP_PORT);
+var granularities = {
+  seconds: {
+    size: 1440,
+    factor: 60
+  }
+};
+
+var endpoints = ['hello-world'];
 
 var client = redis.createClient('6379', 'redis');
 app.get('/v1/hello-world', function(req, response, next) {
   var stamp = moment().unix();
   var ip = req.ip;
-  client.rpush(['logs:hello-world', ip+":"+stamp], function(err, res) {
-    if(err) {
-      console.log(err);
-    } else {
-      client.hincrby('logs:hello-world:'+ip+':'+getRoundedTimestamp(stamp, {size: 1440, factor: 60}), 'hits', 1, function(err, res) {
-        if(err) {
-          console.log(err);
-        } else {
-          response.json({"message": "hello world"});
-        }
-      });
-    }
-  });
+  var multi = client.multi();
+  multi.rpush(['logs:hello-world', ip+":"+stamp])
+    .hincrby('logs:hello-world:'+ip+':'+getRoundedTimestamp(stamp, granularities.seconds), 'hits', 1)
+    .exec(function(err, res) {
+      if(err) {
+        console.log(err);
+      } else {
+        response.json({"message": "hello world"});
+      }
+    });
 });
 
 app.get('/v1/logs', function(req, res, next) {
