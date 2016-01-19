@@ -72,12 +72,15 @@ app.get('/v1/logs/minute', function(req, res, next) {
   var minute_log = [];
   client.keysAsync('hits:*').then(function(hits) {
     var promises = [];
+    var keys = [];
     hits.forEach(function(key, idx) {
       promises.push(client.hgetallAsync(key));
+      keys.push(key);
     });
     promise.all(promises).then(function(data) {
-      data.forEach(function(el) {
-        var logs = parseMinuteLog(el);
+      data.forEach(function(el, i) {
+        var endpoint = keys[i].split(':')[1];
+        var logs = parseMinuteLog(el, endpoint);
         minute_log = minute_log.concat(logs);
       });
       res.json(minute_log);
@@ -97,11 +100,14 @@ app.get('/v1/hello-world/logs', function(req, res, next) {
   });
 });
 
-var parseMinuteLog = function(data) {
+var parseMinuteLog = function(data, endpoint) {
   var logs = [];
   Object.keys(data).forEach(function(k, i) {
     var obj = prepareObject(k);
     obj['hits'] = data[k];
+    if(endpoint !== null) {
+      obj['endpoint'] = endpoint;
+    }
     logs.push(obj);
   });
   return logs;
