@@ -19,6 +19,12 @@ var granularities = {
 var endpoints = ['hello-world'];
 var client = redis.createClient('6379', 'redis');
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.get('/v1/hello-world', function(req, response, next) {
   var stamp = moment().unix();
   var ip = req.ip;
