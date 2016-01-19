@@ -2,9 +2,12 @@ var express = require('express'),
     http = require('http'),
     redis = require('redis'),
     util = require('util'),
+    promise = require('bluebird'),
     moment = require('moment');
 
 var app = express();
+promise.promisifyAll(redis.RedisClient.prototype);
+promise.promisifyAll(redis.Multi.prototype);
 
 var granularities = {
   seconds: {
@@ -14,8 +17,8 @@ var granularities = {
 };
 
 var endpoints = ['hello-world'];
-
 var client = redis.createClient('6379', 'redis');
+
 app.get('/v1/hello-world', function(req, response, next) {
   var stamp = moment().unix();
   var ip = req.ip;
@@ -33,22 +36,35 @@ app.get('/v1/hello-world', function(req, response, next) {
 });
 
 app.get('/v1/logs', function(req, res, next) {
-  var logset = [];
-  client.lrange('logs:hello-world', 0, -1, function(err, data) {
-    if(err) {
-      console.log(err);
-      response.status(501).json({"error": err});
-    } else {
-      var hwset = [];
-      data.forEach(function (v, i) {
-        var values = v.split(':');
-        hwset.push({ip: values[0], timestamp: values[1]});
-      });
-      logset.push({endpoint: 'hello-world', logs: hwset});
-      res.json(logset);
-    }
+  var promises = [];
+  endpoints.forEach(function(ep) {
+    promises.push(getLogs(ep));
+  });
+  promise.all(promises).then(function(data) {
+    var logset = [];
+    data.forEach(function(epResponse, i) {
+      var hwset = parseLogs(epResponse);
+      logset.push({endpoint: endpoints[i], logs: hwset});
+    });
+    res.json(logset);
+  }).catch(function(err) {
+    console.log(err);
+    res.status(501).json({"error": err});
   });
 });
+
+var getLogs = function(endpoint) {
+  return client.lrangeAsync('logs:'+endpoint, 0, -1);
+};
+
+var parseLogs = function(data) {
+  var hwset = [];
+  data.forEach(function (v, i) {
+    var values = v.split(':');
+    hwset.push({ip: values[0], timestamp: values[1]});
+  });
+  return hwset;
+};
 
 app.get('/', function(req, res, next) {
   client.incr('counter', function(err, counter) {
