@@ -27,8 +27,7 @@ app.get('/v1/hello-world', function(req, response, next) {
     .hincrby('logs:hello-world:'+ip+':'+getRoundedTimestamp(stamp, granularities.seconds), 'hits', 1)
     .exec(function(err, res) {
       if(err) {
-        console.log(err);
-        response.status(501).json({"error": err});
+        reportError(err, res);
       } else {
         response.json({"message": "hello world"});
       }
@@ -43,27 +42,39 @@ app.get('/v1/logs', function(req, res, next) {
   promise.all(promises).then(function(data) {
     var logset = [];
     data.forEach(function(epResponse, i) {
-      var hwset = parseLogs(epResponse);
-      logset.push({endpoint: endpoints[i], logs: hwset});
+      var logs = parseLogs(epResponse);
+      logset.push({endpoint: endpoints[i], logs: logs});
     });
     res.json(logset);
   }).catch(function(err) {
-    console.log(err);
-    res.status(501).json({"error": err});
+    reportError(err, res);
   });
 });
+
+app.get('/v1/hello-world/logs', function(req, res, next) {
+  getLogs('hello-world').then(function(data) {
+    res.json({logs: parseLogs(data)});
+  }).catch(function(err) {
+    reportError(err, res);
+  });
+});
+
+var reportError = function(err, res) {
+  console.log(err);
+  res.status(501).json({"error": err});
+};
 
 var getLogs = function(endpoint) {
   return client.lrangeAsync('logs:'+endpoint, 0, -1);
 };
 
 var parseLogs = function(data) {
-  var hwset = [];
+  var logs = [];
   data.forEach(function (v, i) {
     var values = v.split(':');
-    hwset.push({ip: values[0], timestamp: values[1]});
+    logs.push({ip: values[0], timestamp: values[1]});
   });
-  return hwset;
+  return logs;
 };
 
 app.get('/', function(req, res, next) {
