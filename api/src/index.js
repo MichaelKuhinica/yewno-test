@@ -82,6 +82,6 @@ var getRoundedTimestamp = function(timestamp, granularity) {
   return Math.floor(timestamp / factor) * factor;
 };
 
-http.createServer(app).listen(process.env.PORT || 80, function() {
-  console.log('Listening on port ' + (process.env.PORT || 80));
+http.createServer(app).listen(process.env.PORT || 8080, function() {
+  console.log('Listening on port ' + (process.env.PORT || 8080));
 });

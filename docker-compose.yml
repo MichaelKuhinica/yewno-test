@@ -3,7 +3,7 @@ node:
   links:
     - redis
   ports:
-    - "80:80"
+    - "8080:8080"
 
 redis:
   image: redis

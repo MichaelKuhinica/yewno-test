@@ -22,6 +22,6 @@ WORKDIR /src
 ADD . /src
 
 # Expose port
-EXPOSE  80
+EXPOSE  8080
 
 CMD ["node", "src/index.js"]
