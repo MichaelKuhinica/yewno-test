@@ -25,6 +25,7 @@ app.get('/v1/hello-world', function(req, response, next) {
     .exec(function(err, res) {
       if(err) {
         console.log(err);
+        response.status(501).json({"error": err});
       } else {
         response.json({"message": "hello world"});
       }
@@ -36,6 +37,7 @@ app.get('/v1/logs', function(req, res, next) {
   client.lrange('logs:hello-world', 0, -1, function(err, data) {
     if(err) {
       console.log(err);
+      response.status(501).json({"error": err});
     } else {
       var hwset = [];
       data.forEach(function (v, i) {
