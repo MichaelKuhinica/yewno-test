@@ -56,8 +56,30 @@ app.get('/v1/hello-world/logs/minute', function(req, res, next) {
     if(err) {
       reportError(err, res);
     } else {
-      res.json(data);
+      var logs = parseMinuteLog(data);
+      res.json(logs);
     }
+  });
+});
+
+app.get('/v1/logs/minute', function(req, res, next) {
+  var minute_log = [];
+  client.keysAsync('hits:*').then(function(hits) {
+    var promises = [];
+    hits.forEach(function(key, idx) {
+      promises.push(client.hgetallAsync(key));
+    });
+    promise.all(promises).then(function(data) {
+      data.forEach(function(el) {
+        var logs = parseMinuteLog(el);
+        minute_log = minute_log.concat(logs);
+      });
+      res.json(minute_log);
+    }).catch(function(err) {
+      reportError(err, res);
+    });
+  }).catch(function(err) {
+    reportError(err, res);
   });
 });
 
@@ -68,6 +90,16 @@ app.get('/v1/hello-world/logs', function(req, res, next) {
     reportError(err, res);
   });
 });
+
+var parseMinuteLog = function(data) {
+  var logs = [];
+  Object.keys(data).forEach(function(k, i) {
+    var obj = prepareObject(k);
+    obj['hits'] = data[k];
+    logs.push(obj);
+  });
+  return logs;
+};
 
 var reportError = function(err, res) {
   console.log(err);
