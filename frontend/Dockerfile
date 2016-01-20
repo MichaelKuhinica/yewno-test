@@ -1,2 +1,28 @@
 FROM nginx
-COPY dist/ /usr/share/nginx/html
+
+# Install Node.js
+RUN \
+  apt-get update && \
+  apt-get install -y curl build-essential && \
+  apt-get install -y git && \
+  curl -sL https://deb.nodesource.com/setup_0.12 | bash - && \
+  apt-get install -y nodejs && \
+  apt-get purge -y curl apt-transport-https && \
+  apt-get autoremove -y && \
+  apt-get clean all
+
+RUN npm cache clean
+RUN npm install -g npm@latest
+RUN npm install -g bower gulp
+
+# Provides cached layer for node_modules
+ADD package.json /tmp/package.json
+RUN cd /tmp && npm install
+RUN mkdir -p /src && cp -a /tmp/node_modules /src/
+
+WORKDIR /src
+ADD . /src
+
+RUN bower install
+RUN gulp
+RUN cp -ra /src/dist/* /usr/share/nginx/html
