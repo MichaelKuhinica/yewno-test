@@ -1,4 +1,4 @@
-var api_base = "http://104.197.105.0:8080/v1/";
+var api_base = "http://<%= api_addr %>:<%= api_port %>/v1/";
 
 var performQuery = function(endpoint) {
   return $.get(api_base+endpoint);

@@ -29,6 +29,10 @@ gulp.task('scripts', () => {
     .pipe($.sourcemaps.init())
     .pipe($.babel())
     .pipe($.sourcemaps.write('.'))
+		.pipe($.template({
+      api_addr: $.util.env.API_ADDR || '127.0.0.1',
+      api_port: $.util.env.API_PORT || '8080'
+     }))
     .pipe(gulp.dest('.tmp/scripts'))
     .pipe(reload({stream: true}));
 });
