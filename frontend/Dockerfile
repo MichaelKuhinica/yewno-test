@@ -20,9 +20,14 @@ ADD package.json /tmp/package.json
 RUN cd /tmp && npm install
 RUN mkdir -p /src && cp -a /tmp/node_modules /src/
 
+# Cache for bower
+ADD bower.json /tmp/bower.json
+ADD .bowerrc /tmp/.bowerrc
+RUN cd /tmp && bower install
+RUN cp -a /tmp/bower_components /src/
+
 WORKDIR /src
 ADD . /src
 
-RUN bower install
 RUN gulp
 RUN cp -ra /src/dist/* /usr/share/nginx/html
