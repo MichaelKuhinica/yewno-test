@@ -1,4 +1,6 @@
 FROM nginx
+ENV API_ADDR 130.211.122.53
+ENV API_PORT 8080
 
 # Install Node.js
 RUN \
@@ -29,5 +31,5 @@ RUN cp -a /tmp/bower_components /src/
 WORKDIR /src
 ADD . /src
 
-RUN gulp
+RUN gulp --API_ADDR=${API_ADDR} --API_PORT=${API_PORT}
 RUN cp -ra /src/dist/* /usr/share/nginx/html
