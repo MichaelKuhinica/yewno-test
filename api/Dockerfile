@@ -1,16 +1,8 @@
 # Set the base image to Ubuntu
-FROM    ubuntu
+FROM    node
 
 # File Author / Maintainer
 MAINTAINER Michael Martins Kuhinica
-
-# Install Node.js and other dependencies
-RUN apt-get update && \
-    apt-get -y install curl && \
-    curl -sL https://deb.nodesource.com/setup | sudo bash - && \
-    apt-get -y install python build-essential nodejs
-
-RUN npm -g install npm@latest
 
 # Provides cached layer for node_modules
 ADD package.json /tmp/package.json
